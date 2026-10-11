@@ -58,7 +58,7 @@ function ymLabel(ym){const[y,m]=ym.split('-');return y+'년 '+Number(m)+'월'}
 function rIn(){
 const ym=S.cur,m=ensure(ym);
 $('#app').innerHTML=`
-<div class="mnav"><button onclick="go(-1)">‹</button><button class="t" onclick="pick()">${ymLabel(ym)}</button><button onclick="go(1)">›</button></div>
+<div class="mnav"><button onclick="go(-1)">‹</button><button class="t" onclick="pick()">${ymLabel(ym)}</button><button onclick="shareImg()" style="width:auto;padding:0 10px;font-size:13px;margin-right:6px">마눌확인</button><button onclick="go(1)">›</button></div>
 <div class="card big"><div class="l">송금할 돈 (월급 − 용돈 − 월급지출합계, 만원 단위 반올림)</div><div class="v" id="vbal"></div><div class="note" id="vbw"></div></div>
 <div class="card"><div class="grid2">
 <div><label class="f">월급(입금액)</label><input id="sal" inputmode="numeric" value="${fv(m.salary)}" placeholder="${fmt(effSal(ym))}"></div>
@@ -91,6 +91,25 @@ const bind=(id,f)=>{$('#'+id).oninput=e=>{f(fmtIn(e.target));save();sum()}};
 bind('sal',v=>m.salary=v);bind('shin',v=>m.shin=v||0);bind('sam',v=>m.sam=v||0);bind('bank',v=>m.bank=v||0);bind('oth',v=>m.other=v);
 $('#rat').oninput=e=>{const x=parseFloat(e.target.value);m.ratio=isNaN(x)?null:x/100;save();sum()};
 drawItems();sum();fit()}
+
+async function shareImg(){
+const ym=S.cur,m=ensure(ym),c=calc(m,ym);
+const rows=m.items.filter(i=>i.t!=='y'&&(i.name||effAmt(i,ym))).map(i=>[(i.name||'')+(i.wk?' ×'+weekCount(i,ym)+'주':''),effAmt(i,ym)]);
+const W=720,P=36,RH=58,top=[['월급',fmt(c.sal)],['용돈 비율',(effRat(ym)*100).toFixed(2).replace(/\.?0+$/,'')+'%'],['용돈 (월급×비율)',fmt(c.y0)],['송금 반올림 조정',sgn(c.adj)],['용돈 (최종)',fmt(c.yong)]];
+const H=P+70+190+P+top.length*RH+P+60+rows.length*RH+RH+P+10;
+const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+const F='-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+x.fillStyle='#10131a';x.fillRect(0,0,W,H);
+const card=(y,h)=>{x.fillStyle='#1b212c';x.beginPath();x.roundRect(P/2,y,W-P,h,24);x.fill();x.strokeStyle='#2c3444';x.lineWidth=2;x.stroke()};
+const row=(y,k,v,b)=>{x.font=(b?'700 ':'400 ')+'28px '+F;x.textAlign='left';x.fillStyle=b?'#fff':'#9aa3b5';x.fillText(k,P+10,y);x.textAlign='right';x.fillStyle='#fff';x.font='700 28px '+F;x.fillText(v,W-P-10,y)};
+let y=P;x.fillStyle='#fff';x.font='700 44px '+F;x.textAlign='center';x.fillText(ymLabel(ym),W/2,y+44);y+=70;
+card(y,190);x.font='400 26px '+F;x.fillStyle='#9aa3b5';x.fillText('송금할 돈',W/2,y+50);x.font='700 76px '+F;x.fillStyle=c.send<0?'#e8806f':'#6cc08f';x.fillText(fmt(c.send),W/2,y+140);y+=190+P/2;
+card(y,top.length*RH+30);let yy=y+55;top.forEach(r=>{row(yy,r[0],r[1]);yy+=RH});y+=top.length*RH+30+P/2;
+card(y,60+rows.length*RH+RH);yy=y+50;x.textAlign='left';x.font='700 28px '+F;x.fillStyle='#fff';x.fillText('지출 항목 (월급)',P+10,yy);yy+=RH;
+rows.forEach(r=>{row(yy,r[0],fmt(r[1]));yy+=RH});row(yy,'지출 합계 (월급)',fmt(c.wsum),1);
+const blob=await new Promise(r=>cv.toBlob(r,'image/png'));const f=new File([blob],'월급출납장_'+ym+'.png',{type:'image/png'});
+try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}catch(e){if(e&&e.name==='AbortError')return}
+const u=URL.createObjectURL(blob),o=document.createElement('div');o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:99;overflow:auto;padding:12px;text-align:center;color:#fff;font-size:14px';o.innerHTML='<p>이미지를 길게 눌러 저장/공유하세요 (화면을 탭하면 닫힘)</p><img src="'+u+'" style="width:100%;max-width:480px">';o.onclick=()=>o.remove();document.body.appendChild(o)}
 let openOut=false,openBw=false,openBal=false;function tgBal(){openBal=!openBal;$('#bald').classList.toggle('o',openBal);$('#car3').textContent=openBal?'▾':'▸'}function tgBw(){openBw=!openBw;$('#bwd').classList.toggle('o',openBw);$('#car2').textContent=openBw?'▾':'▸'}
 function tgOut(){openOut=!openOut;$('#outd').classList.toggle('o',openOut);sum()}
 function fit(){document.querySelectorAll('.fit').forEach(e=>{let z=14;e.style.fontSize=z+'px';while(e.scrollWidth>e.clientWidth&&z>7){z-=.5;e.style.fontSize=z+'px'}})}
