@@ -18,6 +18,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function ymNow(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function shift(ym,k){let[y,m]=ym.split('-').map(Number);m+=k;while(m>12){m-=12;y++}while(m<1){m+=12;y--}return y+'-'+String(m).padStart(2,'0')}
 function lastBefore(ym){return Object.keys(S.months).filter(k=>k<ym).sort().pop()}
+const NBK=()=>!S.months[S.cur].bank;const NB=()=>{const m=S.months[S.cur];return !(m.shin||m.sam)};
 function carry(i,ym){const d=parseInt((i.date||'').slice(8,10),10);if(!d)return{...i,date:''};const[y,m]=ym.split('-').map(Number);const dim=new Date(y,m,0).getDate();return{...i,date:ym+'-'+String(Math.min(d,dim)).padStart(2,'0')}}
 function ensure(ym){
 if(S.months[ym])return S.months[ym];
@@ -84,11 +85,11 @@ $('#app').innerHTML=`
 <div class="row" id="cdr" style="display:none"><span class="k" id="cdl"></span><b id="cdv" class="neg"></b></div>
 <div class="row" onclick="tgOut()" style="cursor:pointer"><span class="k">나가는 돈 (입출금통장) <span id="car">▸</span></span><b id="out"></b></div>
 <div class="roll${openOut?' o':''}" id="outd"><div class="d">카드합계 + 지출분류 + 지출합계 − 카드체크</div><div id="outdet"></div><div class="d">월급·용돈 항목 모두 지출합계에 포함됩니다.</div></div></div>
-<div class="card"><label class="f" style="margin-top:0">입출금통장</label><input id="bank" inputmode="numeric" value="${fv(m.bank)}" placeholder="0">
+<div class="card"><label class="f" style="margin-top:0">입출금통장</label><input id="bank" inputmode="numeric" value="${fv(m.bank)}">
 <div class="row" onclick="tgBal()" style="margin-top:8px;cursor:pointer"><span class="k">송금할 돈 <span id="car3">▸</span></span><b id="bal"></b></div><div class="roll${openBal?' o':''}" id="bald"><div class="d">월급 − 용돈 − 월급지출합계</div></div>
 <div class="row" onclick="tgBw()" style="cursor:pointer"><span class="k">적자/흑자 <span id="car2">▸</span></span><b id="bw"></b></div><div class="roll${openBw?' o':''}" id="bwd"><div class="d">입출금통장 − 나가는돈</div></div></div>`;
 const bind=(id,f)=>{$('#'+id).oninput=e=>{f(fmtIn(e.target));save();sum()}};
-bind('sal',v=>m.salary=v);bind('shin',v=>m.shin=v||0);bind('sam',v=>m.sam=v||0);bind('bank',v=>m.bank=v||0);bind('oth',v=>m.other=v);
+bind('sal',v=>m.salary=v);bind('shin',v=>m.shin=v||0);bind('sam',v=>m.sam=v||0);bind('bank',v=>m.bank=v||null);bind('oth',v=>m.other=v);
 $('#rat').oninput=e=>{const x=parseFloat(e.target.value);m.ratio=isNaN(x)?null:x/100;save();sum()};
 drawItems();sum();fit()}
 
@@ -103,7 +104,7 @@ x.fillStyle='#10131a';x.fillRect(0,0,W,H);
 const card=(y,h)=>{x.fillStyle='#1b212c';x.beginPath();x.roundRect(P/2,y,W-P,h,24);x.fill();x.strokeStyle='#2c3444';x.lineWidth=2;x.stroke()};
 const row=(y,k,v,b)=>{x.font=(b?'700 ':'400 ')+'28px '+F;x.textAlign='left';x.fillStyle=b?'#fff':'#9aa3b5';x.fillText(k,P+10,y);x.textAlign='right';x.fillStyle='#fff';x.font='700 28px '+F;x.fillText(v,W-P-10,y)};
 let y=P;x.fillStyle='#fff';x.font='700 44px '+F;x.textAlign='center';x.fillText(ymLabel(ym),W/2,y+44);y+=70;
-card(y,190);x.font='400 26px '+F;x.fillStyle='#9aa3b5';x.fillText('송금할 돈',W/2,y+50);x.font='700 76px '+F;x.fillStyle=c.send<0?'#e8806f':'#6cc08f';x.fillText(fmt(c.send),W/2,y+140);y+=190+P/2;
+card(y,190);x.font='400 26px '+F;x.fillStyle='#9aa3b5';x.fillText('송금할 돈',W/2,y+50);x.font='700 76px '+F;x.fillStyle=c.send<0?'#e8806f':'#6cc08f';x.fillText(NBK()?'':fmt(c.send),W/2,y+140);y+=190+P/2;
 card(y,top.length*RH+30);let yy=y+55;top.forEach(r=>{row(yy,r[0],r[1]);yy+=RH});y+=top.length*RH+30+P/2;
 card(y,60+rows.length*RH+RH);yy=y+50;x.textAlign='left';x.font='700 28px '+F;x.fillStyle='#fff';x.fillText('지출 항목 (월급)',P+10,yy);yy+=RH;
 rows.forEach(r=>{row(yy,r[0],fmt(r[1]));yy+=RH});row(yy,'지출 합계 (월급)',fmt(c.wsum),1);
@@ -115,12 +116,12 @@ function tgOut(){openOut=!openOut;$('#outd').classList.toggle('o',openOut);sum()
 function fit(){document.querySelectorAll('.fit').forEach(e=>{let z=14;e.style.fontSize=z+'px';while(e.scrollWidth>e.clientWidth&&z>7){z-=.5;e.style.fontSize=z+'px'}})}
 function sum(){const ym=S.cur,m=S.months[ym],c=calc(m,ym);
 const set=(id,t,cls)=>{const e=$('#'+id);if(!e)return;e.textContent=t;if(cls!==undefined)e.className=cls};
-set('vbal',fmt(c.send),'v '+(c.send<0?'neg':'pos'));
-set('vbw',(c.bw>=0?'흑자 ':'적자 ')+sgn(c.bw)+'원 (입출금통장−나가는돈)');
+set('vbal',NBK()?'':fmt(c.send),'v '+(c.send<0?'neg':'pos'));
+set('vbw',NBK()?'':(c.bw>=0?'흑자 ':'적자 ')+sgn(c.bw)+'원 (입출금통장−나가는돈)');
 set('snote',(m.salary==null?'월급 '+fmt(c.sal)+'원':'')+(m.salary==null&&m.ratio==null?' · ':'')+(m.ratio==null?'비율 '+(effRat(ym)*100).toFixed(2).replace(/\.?0+$/,'')+'%':'')+((m.salary==null||m.ratio==null)?' 지난달 값 자동 적용 중 · 직접 입력하면 입력값이 우선':''));set('y0',fmt(c.y0));set('ysA',fmt(c.ysA));set('wsum',fmt(c.wsum));set('ysr',sgn(-c.ysA));set('left',sgn(c.left),c.left<0?'neg':'');set('adj',sgn(-c.adj));set('yong',fmt(c.yong));set('isum',fmt(c.isum));
-set('car',openOut?'▾':'▸');set('car2',openBw?'▾':'▸');set('car3',openBal?'▾':'▸');{const L=(k,v)=>`<div class="l"><span>${k}</span><span>${v}</span></div>`;const e=$('#outdet');if(e)e.innerHTML=L('카드합계','+'+fmt(c.card))+L('지출분류','+'+fmt(c.other))+L('지출합계','+'+fmt(c.isum))+L('카드체크','−'+fmt(c.csum))}set('card',fmt(c.card));{const d=c.csum-c.card,r=$('#cdr');if(r){r.style.display=d?'flex':'none';set('cdl','카드체크 항목 합 '+fmt(c.csum)+'원 · 차이(항목합−카드합계)');set('cdv',sgn(d))}}set('out',fmt(c.out));
+set('car',openOut?'▾':'▸');set('car2',openBw?'▾':'▸');set('car3',openBal?'▾':'▸');{const L=(k,v)=>`<div class="l"><span>${k}</span><span>${v}</span></div>`;const e=$('#outdet');if(e)e.innerHTML=NB()?'':L('카드합계','+'+fmt(c.card))+L('지출분류','+'+fmt(c.other))+L('지출합계','+'+fmt(c.isum))+L('카드체크','−'+fmt(c.csum))}set('card',NB()?'':fmt(c.card));{const d=c.csum-c.card,r=$('#cdr');if(r){r.style.display=d&&!NB()?'flex':'none';set('cdl','카드체크 항목 합 '+fmt(c.csum)+'원 · 차이(항목합−카드합계)');set('cdv',sgn(d))}}set('out',NB()?'':fmt(c.out));
 set('onote',m.other==null?'지난달 값 '+fmt(c.other)+'원 자동 적용 중 · 직접 입력하면 입력값이 우선':'직접 입력한 값 · 지우면 지난달 값을 사용');
-set('sum',fmt(c.sum));set('bal',sgn(c.send));set('bw',(c.bw>=0?'흑자 ':'적자 ')+sgn(c.bw),c.bw<0?'neg':'pos')}
+set('sum',fmt(c.sum));set('bal',NBK()?'':sgn(c.send));set('bw',NBK()?'':(c.bw>=0?'흑자 ':'적자 ')+sgn(c.bw),c.bw<0?'neg':'pos')}
 function itemHtml(it,i){return `<div class="it">
 <input type="date" value="${it.date||''}" onchange="upd(${i},'date',this.value)">
 <input value="${esc(it.name)}" placeholder="항목" onchange="upd(${i},'name',this.value)">
