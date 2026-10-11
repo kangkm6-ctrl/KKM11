@@ -41,7 +41,7 @@ const sal=effSal(ym),rat=effRat(ym);const y0=Math.round(sal*rat);
 const isY=i=>i.t==='y',amt=i=>effAmt(i,ym);
 const isum=m.items.reduce((a,i)=>a+amt(i),0),ysA=m.items.reduce((a,i)=>a+(isY(i)?amt(i):0),0),wsum=isum-ysA;
 const base0=y0-ysA,send0=sal-base0-isum;
-const send=sal>0?Math.floor(send0/10000+0.5)*10000:send0;
+const send=send0;
 const adj=send-send0;
 const yong=base0-adj,sum=yong+isum,left=yong;
 const card=(m.shin||0)+(m.sam||0),other=effOther(ym),csum=m.items.reduce((a,i)=>a+(i.card?amt(i):0),0),out=card+other+isum-csum,bank=m.bank||0;
@@ -59,13 +59,12 @@ function rIn(){
 const ym=S.cur,m=ensure(ym);
 $('#app').innerHTML=`
 <div class="mnav"><button onclick="go(-1)">‹</button><button class="t" onclick="pick()">${ymLabel(ym)}</button><button onclick="shareImg()" style="width:auto;padding:0 10px;font-size:13px;margin-right:6px">마눌확인</button><button onclick="go(1)">›</button></div>
-<div class="card big"><div class="l">송금할 돈 (월급 − 용돈 − 월급지출합계, 만원 단위 반올림)</div><div class="v" id="vbal"></div><div class="note" id="vbw"></div></div>
+<div class="card big"><div class="l">송금할 돈 (월급 − 용돈 − 월급지출합계)</div><div class="v" id="vbal"></div><div class="note" id="vbw"></div></div>
 <div class="card"><div class="grid2">
 <div><label class="f">월급(입금액)</label><input id="sal" inputmode="numeric" value="${fv(m.salary)}" placeholder="${fmt(effSal(ym))}"></div>
 <div><label class="f">용돈 비율 %</label><input id="rat" inputmode="decimal" value="${m.ratio==null?'':+(m.ratio*100).toFixed(2)}" placeholder="${+(effRat(ym)*100).toFixed(2)}"></div></div>
 <div class="note" id="snote"></div>
 <div class="row" style="margin-top:8px"><span class="k">용돈 (월급×비율)</span><b id="y0"></b></div>
-<div class="row"><span class="k">송금 반올림 조정 (용돈에서 가감)</span><b id="adj"></b></div>
 <div class="row"><span class="k">용돈 (최종)</span><b id="yong"></b></div></div>
 <div class="card"><b>지출 항목 (월급)</b><div style="height:8px"></div><div id="items"></div>
 <button class="s" onclick="addItem('w')">+ 항목 추가</button><button class="s" onclick="copyFixed('w')">지난달 고정항목 불러오기</button>
@@ -95,7 +94,7 @@ drawItems();sum();fit()}
 async function shareImg(){
 const ym=S.cur,m=ensure(ym),c=calc(m,ym);
 const rows=m.items.filter(i=>i.t!=='y'&&(i.name||effAmt(i,ym))).map(i=>[(i.name||'')+(i.wk?' ×'+weekCount(i,ym)+'주':''),effAmt(i,ym)]);
-const W=720,P=36,RH=58,top=[['월급',fmt(c.sal)],['용돈 비율',(effRat(ym)*100).toFixed(2).replace(/\.?0+$/,'')+'%'],['용돈 (월급×비율)',fmt(c.y0)],['송금 반올림 조정',sgn(c.adj)],['용돈 (최종)',fmt(c.yong)]];
+const W=720,P=36,RH=58,top=[['월급',fmt(c.sal)],['용돈 비율',(effRat(ym)*100).toFixed(2).replace(/\.?0+$/,'')+'%'],['용돈 (월급×비율)',fmt(c.y0)],['용돈 (최종)',fmt(c.yong)]];
 const H=P+70+190+P+top.length*RH+P+60+rows.length*RH+RH+P+10;
 const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');
 const F='-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif';
@@ -148,7 +147,7 @@ let tot=0;
 const rows=keys.map(k=>{const c=calc(S.months[k],k);tot+=c.send;return`<div class="lst" onclick="S.cur='${k}';save();setTab('in')"><b>${k.slice(2).replace('-','.')}</b><span class="r">${fmt(c.sal)}</span><span class="r">${fmt(c.sum)}</span><span class="r ${c.send<0?'neg':'pos'}">${sgn(c.send)}</span></div>`}).join('');
 $('#app').innerHTML=`<div class="card big"><div class="l">기록된 ${keys.length}개월 송금할 돈 누계</div><div class="v ${tot<0?'neg':'pos'}">${sgn(tot)}</div></div>
 <div class="lst h"><span>연.월</span><span class="r">월급</span><span class="r">합계</span><span class="r">송금할 돈</span></div>${rows}
-<div class="note">행을 누르면 해당 월로 이동합니다. 송금할 돈 = 월급 − 용돈 − 월급지출합계, 만원 단위 반올림</div>`}
+<div class="note">행을 누르면 해당 월로 이동합니다. 송금할 돈 = 월급 − 용돈 − 월급지출합계</div>`}
 function rYear(){
 const Y={};Object.keys(S.months).forEach(k=>{const m=S.months[k];if(!incl(k))return;const y=k.slice(0,4),c=calc(m,k);
 const o=Y[y]=Y[y]||{n:0,sal:0,yong:0,sum:0,send:0,bw:0};o.n++;o.sal+=c.sal;o.yong+=c.yong;o.sum+=c.sum;o.send+=c.send;o.bw+=c.bw});
@@ -168,7 +167,7 @@ $('#app').innerHTML=`<div class="card"><b>백업 · 복원</b>
 <button class="s" style="margin-top:8px" onclick="document.getElementById('fi').click()">백업 파일 불러오기</button>
 <input id="fi" type="file" accept=".json,application/json" style="display:none" onchange="imp(this)">
 <button class="s" onclick="rst()">원본 기록으로 되돌리기</button></div>
-<div class="card"><b>계산 방식</b><div class="note">용돈 = 월급 × 비율(기본 10%), 용돈 항목은 용돈에서 차감(남은 용돈)하되 지출합계에는 월급 항목과 함께 포함<br>송금할 돈 = 월급 − 용돈 − 월급지출합계, 만원 단위 반올림(5천원 이상 올림)<br>반올림으로 늘거나 줄어든 금액은 용돈에서 가감<br>합계 = 용돈(반올림 반영) + 월급 지출합계 (= 최종 용돈 + 지출 합계(월급+용돈))<br>일주일반복 체크 항목은 금액 × 이번 달 반복 횟수로 계산<br>나가는돈 = 카드합계 + 지출분류 + 지출합계 − 카드체크<br>카드체크 항목 합이 실제 카드금액과 다르면 카드합계 아래에 차이를 표시<br>지출분류: 직접 입력이 우선, 없으면 지난달 값 사용<br>흑자/적자 = 입출금통장 − 나가는돈</div></div>`}
+<div class="card"><b>계산 방식</b><div class="note">용돈 = 월급 × 비율(기본 10%), 용돈 항목은 용돈에서 차감(남은 용돈)하되 지출합계에는 월급 항목과 함께 포함<br>송금할 돈 = 월급 − 용돈 − 월급지출합계<br>합계 = 용돈 + 월급 지출합계 (= 최종 용돈 + 지출 합계(월급+용돈))<br>일주일반복 체크 항목은 금액 × 이번 달 반복 횟수로 계산<br>나가는돈 = 카드합계 + 지출분류 + 지출합계 − 카드체크<br>카드체크 항목 합이 실제 카드금액과 다르면 카드합계 아래에 차이를 표시<br>지출분류: 직접 입력이 우선, 없으면 지난달 값 사용<br>흑자/적자 = 입출금통장 − 나가는돈</div></div>`}
 function exp(){const b=new Blob([JSON.stringify(S)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='월급출납장_백업_'+new Date().toISOString().slice(0,10)+'.json';a.click()}
 function imp(el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.months)throw 0;if(!confirm('현재 기록을 이 백업으로 덮어쓸까요?'))return;S=mig(d);save();alert('불러왔습니다.');render()}catch(e){alert('올바른 백업 파일이 아닙니다.')}};r.readAsText(f)}
 function rst(){if(!confirm('모든 기록을 원본(2026년 9월까지)으로 되돌립니다. 입력한 새 기록은 사라집니다.'))return;S={months:seed(),cur:ymNow(),v:5};save();render()}
