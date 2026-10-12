@@ -18,12 +18,15 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function ymNow(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function shift(ym,k){let[y,m]=ym.split('-').map(Number);m+=k;while(m>12){m-=12;y++}while(m<1){m+=12;y--}return y+'-'+String(m).padStart(2,'0')}
 function lastBefore(ym){return Object.keys(S.months).filter(k=>k<ym).sort().pop()}
+const ordCmp=(a,b)=>(a.fixed?1:0)-(b.fixed?1:0)||(a.fixed?0:(b.date||'9999').localeCompare(a.date||'9999'));
 const NBK=()=>!S.months[S.cur].bank;const NB=()=>{const m=S.months[S.cur];return !(m.shin||m.sam)};
 function carry(i,ym){const d=parseInt((i.date||'').slice(8,10),10);if(!d)return{...i,date:''};const[y,m]=ym.split('-').map(Number);const dim=new Date(y,m,0).getDate();return{...i,date:ym+'-'+String(Math.min(d,dim)).padStart(2,'0')}}
 function ensure(ym){
-if(S.months[ym])return S.months[ym];
+const nowYm=(d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))(new Date());
+const e=S.months[ym];
+if(e){if(!e.auto&&ym>=nowYm){const p=S.months[lastBefore(ym)];if(p)p.items.filter(i=>i.fixed).forEach(i=>{if(!e.items.some(x=>x.name===i.name&&x.fixed&&(x.t||'w')===(i.t||'w')))e.items.push(carry(i,ym))});e.auto=true}return e}
 const p=S.months[lastBefore(ym)];
-return S.months[ym]={salary:null,ratio:null,items:p?p.items.filter(i=>i.fixed).map(i=>carry(i,ym)):[],shin:0,sam:0,other:null,bank:0}}
+return S.months[ym]={salary:null,ratio:null,items:p?p.items.filter(i=>i.fixed).map(i=>carry(i,ym)):[],shin:0,sam:0,other:null,bank:0,auto:true}}
 function effOther(ym){const m=S.months[ym];if(m&&m.other!=null)return m.other;
 const ks=Object.keys(S.months).filter(k=>k<ym).sort();
 for(let i=ks.length-1;i>=0;i--){const o=S.months[ks[i]].other;if(o!=null)return o}return 0}
@@ -68,11 +71,9 @@ $('#app').innerHTML=`
 <div class="note" id="snote"></div>
 <div class="row" style="margin-top:2px"><span class="k">용돈 (월급×비율)</span><b id="y0"></b></div>
 </div>
-<div class="card"><div onclick="tgIt('w')" style="cursor:pointer;font-weight:700;display:flex;justify-content:space-between;align-items:center"><span>지출 항목 (월급) <span id="icw" style="font-weight:400;color:var(--mute)">${openIt.w?'▾':'▸'}</span></span><b id="wsum" style="font-variant-numeric:tabular-nums"></b></div><div id="ibw" style="display:${openIt.w?'block':'none'}"><div style="height:3px"></div><div id="items"></div>
-<button class="s" onclick="addItem('w')">+ 항목 추가</button><button class="s" onclick="copyFixed('w')">지난달 고정항목 불러오기</button>
+<div class="card"><div onclick="tgIt('w')" style="cursor:pointer;font-weight:700;display:flex;justify-content:space-between;align-items:center"><span>지출 항목 (월급) <span id="icw" style="font-weight:400;color:var(--mute)">${openIt.w?'▾':'▸'}</span></span><b id="wsum" style="font-variant-numeric:tabular-nums"></b></div><div id="ibw" style="display:${openIt.w?'block':'none'}"><button class="s" onclick="addItem('w')" style="margin:3px 0 4px">+ 항목 추가</button><div id="items"></div>
 </div></div>
-<div class="card"><div onclick="tgIt('y')" style="cursor:pointer;font-weight:700;display:flex;justify-content:space-between;align-items:center"><span>지출 항목 (용돈) <span id="icy" style="font-weight:400;color:var(--mute)">${openIt.y?'▾':'▸'}</span></span><b id="ysA" style="font-variant-numeric:tabular-nums"></b></div><div id="iby" style="display:${openIt.y?'block':'none'}"><div style="height:3px"></div><div id="itemsY"></div>
-<button class="s" onclick="addItem('y')">+ 항목 추가</button><button class="s" onclick="copyFixed('y')">지난달 고정항목 불러오기</button>
+<div class="card"><div onclick="tgIt('y')" style="cursor:pointer;font-weight:700;display:flex;justify-content:space-between;align-items:center"><span>지출 항목 (용돈) <span id="icy" style="font-weight:400;color:var(--mute)">${openIt.y?'▾':'▸'}</span></span><b id="ysA" style="font-variant-numeric:tabular-nums"></b></div><div id="iby" style="display:${openIt.y?'block':'none'}"><button class="s" onclick="addItem('y')" style="margin:3px 0 4px">+ 항목 추가</button><div id="itemsY"></div>
 
 
 <div class="row"><span class="k">남은 용돈</span><b id="left"></b></div></div></div>
@@ -95,7 +96,7 @@ drawItems();sum();fit()}
 
 async function shareImg(){
 const ym=S.cur,m=ensure(ym),c=calc(m,ym);
-const rows=m.items.filter(i=>i.t!=='y'&&(i.name||effAmt(i,ym))).sort((a,b)=>(b.fixed?1:0)-(a.fixed?1:0)).map(i=>[(i.name||'')+(i.wk?' ×'+weekCount(i,ym)+'주':''),effAmt(i,ym)]);
+const rows=m.items.filter(i=>i.t!=='y'&&(i.name||effAmt(i,ym))).sort(ordCmp).map(i=>[(i.name||'')+(i.wk?' ×'+weekCount(i,ym)+'주':''),effAmt(i,ym)]);
 const W=720,P=36,RH=58,top=[['월급',fmt(c.sal)],['용돈 비율',(effRat(ym)*100).toFixed(2).replace(/\.?0+$/,'')+'%'],['용돈 (월급×비율)',fmt(c.y0)]];
 const H=P+70+190+P+top.length*RH+P+60+rows.length*RH+RH+P+10;
 const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');
@@ -124,13 +125,13 @@ set('car',openOut?'▾':'▸');set('car2',openBw?'▾':'▸');set('car3',openBal
 set('onote',m.other==null?'지난달 값 '+fmt(c.other)+'원 자동 적용 중 · 직접 입력하면 입력값이 우선':'직접 입력한 값 · 지우면 지난달 값을 사용');
 set('sum',fmt(c.sum));set('bal',NBK()?'':sgn(c.send));set('bw',NBK()?'':(c.bw>=0?'흑자 ':'적자 ')+sgn(c.bw),c.bw<0?'neg':'pos')}
 function itemHtml(it,i){return `<div class="it">
-<input type="date" value="${it.date||''}" onchange="upd(${i},'date',this.value)">
+<input type="date" value="${it.date||''}" onchange="upd(${i},'date',this.value);drawItems()">
 <input value="${esc(it.name)}" placeholder="항목" onchange="upd(${i},'name',this.value)">
 <input inputmode="numeric" value="${it.amount?fmt(it.amount):''}" placeholder="금액" oninput="ia(this,${i})">
 <button class="x" onclick="del(${i})">✕</button></div>
 <label class="pin"><input type="checkbox" ${it.fixed?'checked':''} onchange="upd(${i},'fixed',this.checked);drawItems()"> 고정항목<input type="checkbox" style="margin-left:8px" ${it.card?'checked':''} onchange="upd(${i},'card',this.checked)"> 카드<input type="checkbox" style="margin-left:8px" ${it.wk?'checked':''} onchange="upd(${i},'wk',this.checked)"> 일주일반복<button class="sg" onclick="neg(${i})">± 부호</button></label><div class="note wk" id="wk${i}">${wkText(it)}</div>`}
 function drawItems(){const m=S.months[S.cur];
-const L=t=>{const a=m.items.map((it,i)=>[it,i]).filter(([it])=>(it.t==='y')===(t==='y')).sort((a,b)=>(b[0].fixed?1:0)-(a[0].fixed?1:0));return a.length?a.map(([it,i])=>itemHtml(it,i)).join(''):'<div class="note">항목이 없습니다.</div>'};
+const L=t=>{const a=m.items.map((it,i)=>[it,i]).filter(([it])=>(it.t==='y')===(t==='y')).sort((a,b)=>ordCmp(a[0],b[0]));return a.length?a.map(([it,i])=>itemHtml(it,i)).join(''):'<div class="note">항목이 없습니다.</div>'};
 $('#items').innerHTML=L('w');$('#itemsY').innerHTML=L('y')}
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 function wkr(i){const e=$('#wk'+i);if(e)e.textContent=wkText(S.months[S.cur].items[i])}
