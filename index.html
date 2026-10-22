@@ -80,7 +80,7 @@ $('#app').innerHTML=`
 <div class="card"><div onclick="tgIt('y')" style="cursor:pointer;font-weight:700;display:flex;justify-content:space-between;align-items:center"><span>지출 항목 (용돈) <span id="icy" style="font-weight:400;color:var(--mute)">${openIt.y?'▾':'▸'}</span></span><b id="ysA" style="font-variant-numeric:tabular-nums"></b></div><div id="iby" style="display:${openIt.y?'block':'none'}"><button class="s" onclick="addItem('y')" style="margin:3px 0 4px">+ 항목 추가</button><div id="itemsY"></div>
 
 
-<div class="row"><span class="k">남은 용돈</span><b id="left"></b></div></div></div>
+<div class="row"><span class="k">고정지출총액</span><b id="fxs"></b></div><div class="row"><span class="k">남은 용돈</span><b id="left"></b></div></div></div>
 <div class="card"><div onclick="tgIt('w')" style="cursor:pointer;font-weight:700;display:flex;justify-content:space-between;align-items:center"><span>지출 항목 (월급) <span id="icw" style="font-weight:400;color:var(--mute)">${openIt.w?'▾':'▸'}</span></span><b id="wsum" style="font-variant-numeric:tabular-nums"></b></div><div id="ibw" style="display:${openIt.w?'block':'none'}"><button class="s" onclick="addItem('w')" style="margin:3px 0 4px">+ 항목 추가</button><div id="items"></div>
 </div></div>
 <div class="card"><b>카드 · 나가는돈</b>
@@ -130,7 +130,7 @@ function sum(){const ym=S.cur,m=S.months[ym],c=calc(m,ym);
 const set=(id,t,cls)=>{const e=$('#'+id);if(!e)return;e.textContent=t;if(cls!==undefined)e.className=cls};
 set('vbal',NBK()?'':fmt(c.send),'v '+(c.send<0?'neg':'pos'));
 set('vbw',NBK()?'':(c.bw>=0?'흑자 ':'적자 ')+sgn(c.bw)+'원 (입출금통장−나가는돈)');
-set('snote',(m.salary==null?'월급 '+fmt(c.sal)+'원':'')+(m.salary==null&&m.ratio==null?' · ':'')+(m.ratio==null?'비율 '+(effRat(ym)*100).toFixed(2).replace(/\.?0+$/,'')+'%':'')+((m.salary==null||m.ratio==null)?' 지난달 값 자동 적용 중 · 직접 입력하면 입력값이 우선':''));set('y0',fmt(c.y0));set('ysA',fmt(c.ysA));set('wsum',fmt(c.wsum));set('ysr',sgn(-c.ysA));set('left',sgn(c.left),c.left<0?'neg':'');set('adj',sgn(-c.adj));set('yong',fmt(c.yong));set('isum',fmt(c.isum));
+set('snote',(m.salary==null?'월급 '+fmt(c.sal)+'원':'')+(m.salary==null&&m.ratio==null?' · ':'')+(m.ratio==null?'비율 '+(effRat(ym)*100).toFixed(2).replace(/\.?0+$/,'')+'%':'')+((m.salary==null||m.ratio==null)?' 지난달 값 자동 적용 중 · 직접 입력하면 입력값이 우선':''));set('y0',fmt(c.y0));set('ysA',fmt(c.ysA));set('fxs',fmt(m.items.reduce((a,i)=>a+(i.fixed?effAmt(i,ym):0),0)));set('wsum',fmt(c.wsum));set('ysr',sgn(-c.ysA));set('left',sgn(c.left),c.left<0?'neg':'');set('adj',sgn(-c.adj));set('yong',fmt(c.yong));set('isum',fmt(c.isum));
 set('car',openOut?'▾':'▸');set('car2',openBw?'▾':'▸');set('car3',openBal?'▾':'▸');{const L=(k,v)=>`<div class="l"><span>${k}</span><span>${v}</span></div>`;const e=$('#outdet');if(e)e.innerHTML=NB()?'':L('카드합계','+'+fmt(c.card))+L('지출분류','+'+fmt(c.other))+L('지출합계','+'+fmt(c.isum))+L('카드체크','−'+fmt(c.csum))}set('card',NB()?'':fmt(c.card));{const d=c.csum-c.card,r=$('#cdr');if(r){r.style.display=d&&!NB()?'flex':'none';set('cdl','카드체크 항목 합 '+fmt(c.csum)+'원 · 차이(항목합−카드합계)');set('cdv',sgn(d))}}set('out',NB()?'':fmt(c.out));
 set('onote',m.other==null?'지난달 값 '+fmt(c.other)+'원 자동 적용 중 · 직접 입력하면 입력값이 우선':'직접 입력한 값 · 지우면 지난달 값을 사용');
 set('sum',fmt(c.sum));set('bal',NBK()?'':sgn(c.send));set('bw',NBK()?'':(c.bw>=0?'흑자 ':'적자 ')+sgn(c.bw),c.bw<0?'neg':'pos')}
