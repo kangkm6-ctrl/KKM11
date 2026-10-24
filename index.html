@@ -139,7 +139,7 @@ function itemHtml(it,i){return `<div class="swp"><button class="swd" onclick="de
 <input value="${esc(it.name)}" placeholder="항목" onchange="upd(${i},'name',this.value)">
 <input inputmode="numeric" value="${it.amount?fmt(it.amount):''}" placeholder="금액" oninput="ia(this,${i})">
 </div>
-<label class="pin">${[['w','주고정항목'],['m','월고정항목'],['y','년고정항목']].map(([k,l])=>`<input type="checkbox" ${it.fx===k?'checked':''} onchange="setFx(${i},'${k}')"> ${l}`).join('<span style="width:6px"></span>')}<span style="width:6px"></span><input type="checkbox" ${it.card?'checked':''} onchange="upd(${i},'card',this.checked)"> 카드</label><div class="note wk" id="wk${i}">${wkText(it)}</div></div></div>`}
+<label class="pin"><input type="checkbox" ${it.card?'checked':''} onchange="upd(${i},'card',this.checked)"> 카드${[['w','주고정항목'],['m','월고정항목'],['y','년고정항목']].map(([k,l])=>`<span style="width:6px"></span><input type="checkbox" ${it.fx===k?'checked':''} onchange="setFx(${i},'${k}')"> ${l}`).join('')}</label><div class="note wk" id="wk${i}">${wkText(it)}</div></div></div>`}
 function drawItems(){const m=S.months[S.cur];
 const L=t=>{const a=m.items.map((it,i)=>[it,i]).filter(([it])=>(it.t==='y')===(t==='y')).sort((a,b)=>ordCmp(a[0],b[0]));return a.length?a.map(([it,i])=>itemHtml(it,i)).join(''):'<div class="note">항목이 없습니다.</div>'};
 $('#items').innerHTML=L('w');$('#itemsY').innerHTML=L('y')}
