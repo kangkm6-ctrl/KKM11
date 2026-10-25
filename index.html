@@ -56,7 +56,7 @@ const send=send0;
 const adj=send-send0;
 const yong=base0-adj,sum=yong+isum,left=yong;
 const card=(m.shin||0)+(m.sam||0),other=effOther(ym),csum=m.items.reduce((a,i)=>a+(i.card?amt(i):0),0),out=card+other+isum-csum,bank=m.bank||0;
-return{left,ysA,wsum,csum,sal,y0,adj,yong,isum,sum,send,card,other,out,bank,bw:bank-out}}
+return{left,ysA,wsum,csum,sal,y0,adj,yong,isum,sum,send,card,other,out,bank,bw:bank-out-send}}
 function fmtIn(el){const t=el.value;const neg=t.trim().startsWith('-');const d=t.replace(/\D/g,'');
 const n=d?parseInt(d,10):null;el.value=n===null?(neg?'-':''):(neg?'-':'')+n.toLocaleString('ko-KR');
 return n===null?null:(neg?-n:n)}
@@ -94,7 +94,7 @@ $('#app').innerHTML=`
 <div class="roll${openOut?' o':''}" id="outd"><div class="d">카드합계 + 지출분류 + 지출합계 − 카드체크</div><div id="outdet"></div><div class="d">월급·용돈 항목 모두 지출합계에 포함됩니다.</div></div></div>
 <div class="card"><label class="f" style="margin-top:0">입출금통장</label><input id="bank" inputmode="numeric" value="${fv(m.bank)}">
 <div class="row" onclick="tgBal()" style="margin-top:2px;cursor:pointer"><span class="k">송금할 돈 <span id="car3">▸</span></span><b id="bal"></b></div><div class="roll${openBal?' o':''}" id="bald"><div class="d">월급 − 용돈 − 월급지출합계</div></div>
-<div class="row" onclick="tgBw()" style="cursor:pointer"><span class="k">적자/흑자 <span id="car2">▸</span></span><b id="bw"></b></div><div class="roll${openBw?' o':''}" id="bwd"><div class="d">입출금통장 − 나가는돈</div></div></div>`;
+<div class="row" onclick="tgBw()" style="cursor:pointer"><span class="k">적자/흑자 <span id="car2">▸</span></span><b id="bw"></b></div><div class="roll${openBw?' o':''}" id="bwd"><div class="d">입출금통장 − 나가는돈 − 송금할 돈</div></div></div>`;
 const bind=(id,f)=>{$('#'+id).oninput=e=>{f(fmtIn(e.target));save();sum()}};
 bind('sal',v=>m.salary=v);bind('shin',v=>m.shin=v||0);bind('sam',v=>m.sam=v||0);bind('bank',v=>m.bank=v||null);bind('oth',v=>m.other=v);
 $('#rat').oninput=e=>{const x=parseFloat(e.target.value);m.ratio=isNaN(x)?null:x/100;save();sum()};
@@ -129,7 +129,7 @@ function fit(){document.querySelectorAll('.fit').forEach(e=>{let z=14;e.style.fo
 function sum(){const ym=S.cur,m=S.months[ym],c=calc(m,ym);
 const set=(id,t,cls)=>{const e=$('#'+id);if(!e)return;e.textContent=t;if(cls!==undefined)e.className=cls};
 set('vbal',NBK()?'':fmt(c.send),'v '+(c.send<0?'neg':'pos'));
-set('vbw',NBK()?'':(c.bw>=0?'흑자 ':'적자 ')+sgn(c.bw)+'원 (입출금통장−나가는돈)');
+set('vbw',NBK()?'':(c.bw>=0?'흑자 ':'적자 ')+sgn(c.bw)+'원 (입출금통장−나가는돈−송금할 돈)');
 set('snote',(m.salary==null?'월급 '+fmt(c.sal)+'원':'')+(m.salary==null&&m.ratio==null?' · ':'')+(m.ratio==null?'비율 '+(effRat(ym)*100).toFixed(2).replace(/\.?0+$/,'')+'%':'')+((m.salary==null||m.ratio==null)?' 지난달 값 자동 적용 중 · 직접 입력하면 입력값이 우선':''));set('y0',fmt(c.y0));set('ysA',fmt(c.ysA));set('fxs',fmt(m.items.reduce((a,i)=>a+(i.fixed?effAmt(i,ym):0),0)));set('wsum',fmt(c.wsum));set('ysr',sgn(-c.ysA));set('left',sgn(c.left),c.left<0?'neg':'');set('adj',sgn(-c.adj));set('yong',fmt(c.yong));set('isum',fmt(c.isum));
 set('car',openOut?'▾':'▸');set('car2',openBw?'▾':'▸');set('car3',openBal?'▾':'▸');{const L=(k,v)=>`<div class="l"><span>${k}</span><span>${v}</span></div>`;const e=$('#outdet');if(e)e.innerHTML=NB()?'':L('카드합계','+'+fmt(c.card))+L('지출분류','+'+fmt(c.other))+L('지출합계','+'+fmt(c.isum))+L('카드체크','−'+fmt(c.csum))}set('card',NB()?'':fmt(c.card));{const d=c.csum-c.card,r=$('#cdr');if(r){r.style.display=d&&!NB()?'flex':'none';set('cdl','카드체크 항목 합 '+fmt(c.csum)+'원 · 차이(항목합−카드합계)');set('cdv',sgn(d))}}set('out',NB()?'':fmt(c.out));
 set('onote',m.other==null?'지난달 값 '+fmt(c.other)+'원 자동 적용 중 · 직접 입력하면 입력값이 우선':'직접 입력한 값 · 지우면 지난달 값을 사용');
@@ -182,7 +182,7 @@ $('#app').innerHTML=`<div class="card"><b>백업 · 복원</b>
 <button class="s" style="margin-top:2px" onclick="document.getElementById('fi').click()">백업 파일 불러오기</button>
 <input id="fi" type="file" accept=".json,application/json" style="display:none" onchange="imp(this)">
 <button class="s" onclick="rst()">원본 기록으로 되돌리기</button></div>
-<div class="card"><b>계산 방식</b><div class="note">용돈 = 월급 × 비율(기본 10%), 용돈 항목은 용돈에서 차감(남은 용돈)하되 지출합계에는 월급 항목과 함께 포함<br>송금할 돈 = 월급 − 용돈 − 월급지출합계<br>합계 = 용돈 + 월급 지출합계 (= 최종 용돈 + 지출 합계(월급+용돈))<br>주고정항목은 금액 × 이번 달 해당 요일 횟수로 계산, 월고정항목은 매달·년고정항목은 매년 같은 달에 자동으로 불러옴<br>나가는돈 = 카드합계 + 지출분류 + 지출합계 − 카드체크<br>카드체크 항목 합이 실제 카드금액과 다르면 카드합계 아래에 차이를 표시<br>지출분류: 직접 입력이 우선, 없으면 지난달 값 사용<br>흑자/적자 = 입출금통장 − 나가는돈</div></div>`}
+<div class="card"><b>계산 방식</b><div class="note">용돈 = 월급 × 비율(기본 10%), 용돈 항목은 용돈에서 차감(남은 용돈)하되 지출합계에는 월급 항목과 함께 포함<br>송금할 돈 = 월급 − 용돈 − 월급지출합계<br>합계 = 용돈 + 월급 지출합계 (= 최종 용돈 + 지출 합계(월급+용돈))<br>주고정항목은 금액 × 이번 달 해당 요일 횟수로 계산, 월고정항목은 매달·년고정항목은 매년 같은 달에 자동으로 불러옴<br>나가는돈 = 카드합계 + 지출분류 + 지출합계 − 카드체크<br>카드체크 항목 합이 실제 카드금액과 다르면 카드합계 아래에 차이를 표시<br>지출분류: 직접 입력이 우선, 없으면 지난달 값 사용<br>흑자/적자 = 입출금통장 − 나가는돈 − 송금할 돈</div></div>`}
 function exp(){const b=new Blob([JSON.stringify(S)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='월급출납장_백업_'+new Date().toISOString().slice(0,10)+'.json';a.click()}
 function imp(el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.months)throw 0;if(!confirm('현재 기록을 이 백업으로 덮어쓸까요?'))return;S=mig(d);save();alert('불러왔습니다.');render()}catch(e){alert('올바른 백업 파일이 아닙니다.')}};r.readAsText(f)}
 function rst(){if(!confirm('모든 기록을 원본(2026년 9월까지)으로 되돌립니다. 입력한 새 기록은 사라집니다.'))return;S={months:seed(),cur:ymNow(),v:5};save();render()}
