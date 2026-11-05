@@ -78,10 +78,10 @@ $('#app').innerHTML=`
 <div class="note" id="snote"></div>
 <div class="row" style="margin-top:2px"><span class="k">용돈 (월급×비율)</span><b id="y0"></b></div>
 </div>
-<div class="card"><div onclick="tgIt('y')" style="cursor:pointer;font-weight:700;display:flex;justify-content:space-between;align-items:center"><span>지출 항목 (용돈) <span id="icy" style="font-weight:400;color:var(--mute)">${openIt.y?'▾':'▸'}</span></span><b id="ysA" style="font-variant-numeric:tabular-nums"></b></div><div id="iby" style="display:${openIt.y?'block':'none'}"><button class="s" onclick="addItem('y')" style="margin:3px 0 4px">+ 항목 추가</button><div id="itemsY"></div>
+<div class="card"><div onclick="tgIt('y')" style="cursor:pointer;font-weight:700;display:flex;justify-content:space-between;align-items:center"><span>지출 항목 (용돈) <span id="icy" style="font-weight:400;color:var(--mute)">${openIt.y?'▾':'▸'}</span></span><b id="ysA" style="font-variant-numeric:tabular-nums"></b></div><div class="row"><span class="k">고정지출총액</span><b id="fxs"></b></div><div class="row"><span class="k">남은 용돈</span><b id="left"></b></div><div id="iby" style="display:${openIt.y?'block':'none'}"><button class="s" onclick="addItem('y')" style="margin:3px 0 4px">+ 항목 추가</button><div id="itemsY"></div>
 
 
-<div class="row"><span class="k">고정지출총액</span><b id="fxs"></b></div><div class="row"><span class="k">남은 용돈</span><b id="left"></b></div></div></div>
+</div></div>
 <div class="card"><div onclick="tgIt('w')" style="cursor:pointer;font-weight:700;display:flex;justify-content:space-between;align-items:center"><span>지출 항목 (월급) <span id="icw" style="font-weight:400;color:var(--mute)">${openIt.w?'▾':'▸'}</span></span><b id="wsum" style="font-variant-numeric:tabular-nums"></b></div><div id="ibw" style="display:${openIt.w?'block':'none'}"><button class="s" onclick="addItem('w')" style="margin:3px 0 4px">+ 항목 추가</button><div id="items"></div>
 </div></div>
 <div class="card"><b>카드 · 나가는돈</b>
@@ -91,7 +91,7 @@ $('#app').innerHTML=`
 <div class="row" style="margin-top:2px"><span class="k">카드합계</span><b id="card"></b></div>
 <div class="row" id="cdr" style="display:none"><span class="k" id="cdl"></span><b id="cdv" class="neg"></b></div>
 <div class="row" onclick="tgOut()" style="cursor:pointer"><span class="k">나가는 돈 (입출금통장) <span id="car">▸</span></span><b id="out"></b></div>
-<div class="roll${openOut?' o':''}" id="outd"><div class="d">카드합계 + 지출항목(월급) + 지출분류</div><div id="outdet"></div><div class="d">월급·용돈 항목 모두 지출합계에 포함됩니다.</div></div></div>
+<div class="roll${openOut?' o':''}" id="outd"><div class="d">카드합계 + 지출항목(월급) + 지출분류</div><div id="outdet"></div></div></div>
 <div class="card"><label class="f" style="margin-top:0">입출금통장</label><input id="bank" inputmode="numeric" value="${fv(m.bank)}">
 <div class="row" onclick="tgBal()" style="margin-top:2px;cursor:pointer"><span class="k">송금할 돈 <span id="car3">▸</span></span><b id="bal"></b></div><div class="roll${openBal?' o':''}" id="bald"><div class="d">월급 − 용돈 − 월급지출합계</div></div>
 <div class="row" onclick="tgBw()" style="cursor:pointer"><span class="k">적자/흑자 <span id="car2">▸</span></span><b id="bw"></b></div><div class="roll${openBw?' o':''}" id="bwd"><div class="d">입출금통장 − 나가는돈 − 송금할 돈</div></div></div>`;
