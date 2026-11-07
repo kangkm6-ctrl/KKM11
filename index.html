@@ -20,7 +20,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function ymNow(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function shift(ym,k){let[y,m]=ym.split('-').map(Number);m+=k;while(m>12){m-=12;y++}while(m<1){m+=12;y--}return y+'-'+String(m).padStart(2,'0')}
 function lastBefore(ym){return Object.keys(S.months).filter(k=>k<ym).sort().pop()}
-const rk=a=>a.fixed?'wmy'.indexOf(a.fx||'m')+1:0;const ordCmp=(a,b)=>rk(a)-rk(b)||(a.fixed?0:(b.date||'9999').localeCompare(a.date||'9999'));
+const rk=a=>a.fixed?'wmy'.indexOf(a.fx||'m')+1:0;const inc=a=>!a.fixed&&(!a.name||!a.amount);const ordCmp=(a,b)=>rk(a)-rk(b)||((inc(b)?1:0)-(inc(a)?1:0))||(inc(a)&&inc(b)?(b.ts||0)-(a.ts||0):0)||(a.fixed?0:(b.date||'9999').localeCompare(a.date||'9999'));
 const NBK=()=>!S.months[S.cur].bank;const NB=()=>{const m=S.months[S.cur];return !m.c.some(Boolean)};
 function carry(i,ym){const[y,m]=ym.split('-').map(Number);const dim=new Date(y,m,0).getDate();const P=n=>String(n).padStart(2,'0');
 if(!i.date)return{...i,date:''};const[iy,im,id]=i.date.split('-').map(Number);
@@ -149,7 +149,7 @@ function upd(i,k,v){S.months[S.cur].items[i][k]=v;save();wkr(i);sum()}
 function ia(el,i){S.months[S.cur].items[i].amount=fmtIn(el)||0;save();wkr(i);sum()}
 function neg(i){const it=S.months[S.cur].items[i];it.amount=-(it.amount||0);save();drawItems();sum()}
 function setFx(i,k){const it=S.months[S.cur].items[i];it.fx=it.fx===k?'':k;it.fixed=!!it.fx;it.wk=it.fx==='w';save();drawItems();sum()}
-function addItem(t){S.months[S.cur].items.push({date:(d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'))(new Date()),name:'',amount:0,fixed:false,fx:'',t:t||'w'});save();drawItems();sum()}
+function addItem(t){S.months[S.cur].items.push({date:(d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'))(new Date()),name:'',amount:0,fixed:false,fx:'',ts:Date.now(),t:t||'w'});save();drawItems();sum()}
 function del(i){S.months[S.cur].items.splice(i,1);save();drawItems();sum()}
 function copyFixed(t){t=t||'w';const m=S.months[S.cur],p=S.months[lastBefore(S.cur)];if(!p)return alert('이전 달 기록이 없습니다.');
 let n=0;p.items.filter(i=>i.fixed&&(i.t||'w')===t).forEach(i=>{if(!m.items.some(x=>x.name===i.name&&x.fixed&&(x.t||'w')===t)){m.items.push(carry(i,S.cur));n++}});
